@@ -3,6 +3,8 @@ export {}
 import ts from 'typescript';
 import * as sandboxFactory from './sandbox'
 
+type Monaco = typeof import("monaco-editor")
+
 declare let require: any
 
 // First set up the VSCode loader in a script tag
@@ -19,9 +21,7 @@ getLoaderScript.onload = () => {
   //
   require.config({
     paths: {
-      // vs: "https://typescript.azureedge.net/cdn/4.0.5/monaco/min/vs",
       vs: 'https://unpkg.com/@typescript-deploys/monaco-editor@4.0.5/min/vs',
-      // sandbox: "https://www.typescriptlang.org/js/sandbox",
     },
     // This is something you need for monaco to work
     ignoreDuplicateModules: ["vs/editor/editor.main"],
@@ -29,34 +29,31 @@ getLoaderScript.onload = () => {
 
   // Grab a copy of monaco, TypeScript and the sandbox
   require(["vs/editor/editor.main"], (
-    main: any,
-    // sandboxFactory: any
+    main: Monaco,
   ) => {
     const initialCode = `import React from 'react';
 
-    console.log(React.Component);
+console.log(React.useState);
 `
 
     const isOK = main && ts && sandboxFactory
     if (isOK) {
-      document.getElementById("loader").parentNode.removeChild(document.getElementById("loader"))
+      document.getElementById("loader")?.parentNode?.removeChild(document.getElementById("loader")!)
     } else {
       console.error("Could not get all the dependencies of sandbox set up!")
-      console.error("main", !!main, "ts", !!ts, "sandbox", !!sandbox)
       return
     }
 
     // Create a sandbox and embed it into the the div #monaco-editor-embed
     const sandboxConfig = {
       text: initialCode,
-      compilerOptions: {},
       domID: "monaco-editor-embed",
       theme: "vs-dark",
     }
 
-    const sandbox = sandboxFactory.createTypeScriptSandbox(sandboxConfig, main, ts)
-    window.sandbox = sandbox
-    sandbox.monaco.editor.setTheme("sandbox-dark")
+    const sandbox = sandboxFactory.createTypeScriptSandbox(sandboxConfig, main, ts);
+    (window as any).sandbox = sandbox;
+    sandbox.monaco.editor.setTheme("vs-dark")
     sandbox.editor.focus()
   })
 }
